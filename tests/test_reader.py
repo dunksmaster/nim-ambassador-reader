@@ -8,6 +8,8 @@ import pytest
 from ambassador_reader.core import (
     DEFAULT_MODEL,
     FALLBACK_MODEL,
+    NIM_MAX_RETRIES,
+    NIM_TIMEOUT_SECONDS,
     AmbassadorReaderError,
     FetchedPage,
     MissingApiKeyError,
@@ -284,9 +286,11 @@ def test_http_fetch_and_nim_client_are_mocked(monkeypatch):
         completions = FakeCompletions()
 
     class FakeOpenAI:
-        def __init__(self, *, base_url, api_key):
+        def __init__(self, *, base_url, api_key, timeout, max_retries):
             assert base_url == "https://integrate.api.nvidia.com/v1"
             assert api_key == secret
+            assert timeout == 90.0
+            assert max_retries == 1
             self.chat = FakeChat()
 
     monkeypatch.setattr("ambassador_reader.core.httpx.Client", FakeClient)
@@ -312,7 +316,9 @@ def test_nim_error_redacts_key(monkeypatch):
         completions = FakeCompletions()
 
     class FakeOpenAI:
-        def __init__(self, *, base_url, api_key):
+        def __init__(self, *, base_url, api_key, timeout, max_retries):
+            assert timeout == 90.0
+            assert max_retries == 1
             self.chat = FakeChat()
 
     monkeypatch.setattr("ambassador_reader.core.OpenAI", FakeOpenAI)

@@ -41,7 +41,7 @@ To record a real example file:
 ambassador-reader <url> --out examples/<slug>.json
 ```
 
-This repository does not include fabricated example output. See [examples/README.md](examples/README.md).
+Real outputs from 2026-09-27 are in [examples/](examples/README.md), with field checks in [examples/VERIFICATION.md](examples/VERIFICATION.md). The all-null object below is only the shape of a record, not one of those runs.
 
 ## Output
 
@@ -81,6 +81,8 @@ If the model returns a list of strings for one field, the strings are joined wit
 
 If the reply is empty or does not match the schema, the same model is called once more. If the second reply is also unusable, the command exits with an error that names the model. It does not include the API key.
 
+Each NIM request uses a 90 second timeout and `max_retries=1`. That limit is separate from the one retry this tool makes when the JSON is unusable.
+
 ## Tests
 
 ```bash
@@ -92,9 +94,11 @@ The tests mock the page fetch and the NIM call. They pass without `NVIDIA_API_KE
 
 ## Limitations
 
-- Pages that render their content with JavaScript often yield little or no text, so most fields come back `null`.
+- Pages that render in the browser, or that redirect to a login page, yield little or no text, so most fields come back `null`. The command prints a warning on stderr when the fetched URL's host or path differs from the URL you passed, and when the extracted text is under 200 characters. Those warnings are not fields in the JSON.
+- Application status, such as paused applications, is not its own field. A page can state that applications are paused and the record can still leave `deadline` null, because no deadline was stated. The Twilio Champions note in [examples/VERIFICATION.md](examples/VERIFICATION.md) is an example.
+- The model can stitch a FAQ answer into a field without the question, or infer an eligibility rule the page does not state. Two of the six runs on 2026-09-27 did this, and those outputs were dropped. See [examples/VERIFICATION.md](examples/VERIFICATION.md).
 - This is an extraction aid. It can miss a fact or copy one incorrectly. Always check the source page before you rely on a field.
-- Script, style, and similar tags are removed. Anchor targets are appended so a link that is only in `href` can still be seen. Text longer than 20,000 characters is truncated.
+- Script, style, and similar tags are removed. Anchor targets are appended so a link that is only in `href` can still be seen. Text longer than 20,000 characters is truncated. Navigation and footer text counts toward that limit.
 - If `NVIDIA_API_KEY` is missing, the command stops before it fetches the page.
 
 ## License

@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlparse
@@ -22,8 +23,12 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 NIM_BASE_URL = "https://integrate.api.nvidia.com/v1"
 DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
 FALLBACK_MODEL = "mistralai/mistral-nemotron"
+# Bound a single NIM call. The SDK default is a 600s timeout and 2 retries.
+NIM_TIMEOUT_SECONDS = 90.0
+NIM_MAX_RETRIES = 1
 TEXT_LIMIT = 20_000
 HTML_LIMIT = 1_000_000
+SHORT_TEXT_CHARS = 200
 
 # Injected in tests. Signature: (model, messages) -> response text.
 ChatComplete = Callable[[str, list[dict[str, str]]], str]
@@ -194,6 +199,42 @@ def fetch_page(url: str) -> FetchedPage:
     return FetchedPage(text=html_to_text(response.text), source_url=str(response.url))
 
 
+def _path_for_compare(path: str) -> str:
+    if path in ("", "/"):
+        return "/"
+    return path
+
+
+def fetched_url_differs(requested_url: str, fetched_url: str) -> bool:
+    """True when the final URL's host or path is not the one that was requested.
+
+    Scheme, query, and fragment changes do not count. An empty path and ``/`` are the same path.
+    """
+    requested = urlparse(requested_url)
+    fetched = urlparse(fetched_url)
+    requested_host = (requested.hostname or "").lower()
+    fetched_host = (fetched.hostname or "").lower()
+    if requested_host != fetched_host:
+        return True
+    return _path_for_compare(requested.path) != _path_for_compare(fetched.path)
+
+
+def warn_about_fetch(requested_url: str, page: FetchedPage) -> None:
+    """Print fetch problems to stderr. They are not part of the JSON record."""
+    if fetched_url_differs(requested_url, page.source_url):
+        print(
+            f"warning: redirected from {requested_url} to {page.source_url}",
+            file=sys.stderr,
+        )
+    text_length = len(page.text.strip())
+    if text_length < SHORT_TEXT_CHARS:
+        print(
+            "warning: extracted page text is very short "
+            f"({text_length} characters); the result is likely thin or about the wrong page",
+            file=sys.stderr,
+        )
+
+
 def resolve_apply_url(apply_url: str | None, source_url: str) -> str | None:
     """Resolve a relative application link against the page URL.
 
@@ -326,7 +367,12 @@ def _message_text(content: object) -> str:
 def nim_chat(model: str, messages: list[dict[str, str]]) -> str:
     """Call the hosted NIM chat completions API. Does not log the API key."""
     key = require_api_key()
-    client = OpenAI(base_url=NIM_BASE_URL, api_key=key)
+    client = OpenAI(
+        base_url=NIM_BASE_URL,
+        api_key=key,
+        timeout=NIM_TIMEOUT_SECONDS,
+        max_retries=NIM_MAX_RETRIES,
+    )
     try:
         completion = client.chat.completions.create(
             model=model,
@@ -446,6 +492,7 @@ def read_ambassador_page(
         chat_complete = nim_chat
 
     page = (fetch or fetch_page)(requested)
+    warn_about_fetch(requested, page)
     if not page.text.strip():
         empty = ProgramExtraction(
             program_name=None,

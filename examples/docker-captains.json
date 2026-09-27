@@ -1,0 +1,10 @@
+{
+  "program_name": "Docker Captains Program",
+  "company": "Docker",
+  "deadline": null,
+  "eligibility": "Must be 18+; show technical expertise in Docker and related technologies; demonstrate active community involvement and thought leadership; provide valuable feedback and ideas for Docker’s products and features; possess a strong online presence with a significant audience or following; have a history of significant contributions to the Docker community; abide by the Docker Community Code of Conduct; program is open internationally; applicants must fit into at least one of the following categories: Docker Advisor (endorsed by a member from the Docker engineering or product team), Docker Thought Leader (at least 5,000 monthly views across blogs, social media, or other online avenues), Docker Community Contributor (5+ years of experience in community leadership or aiding individuals online); special exceptions may apply for those fitting multiple categories, vouched by a Docker member or Captain, part of an underrepresented group, located in a geographical region of particular interest, or with innovative application and genuine enthusiasm.",
+  "benefits": "Career growth, networking, and professional development; direct line to Docker; beta access to Docker products; Docker swag; special access and discounts on Docker Pro and partner products; community support via private Slack channel; annual Captains offsites; education budget for Docker-related training or courses; visibility and recognition as a Docker expert; access to exclusive events and Docker customers; networking and career opportunities; connection with Docker staff for questions, feedback, and insider insights.",
+  "apply_url": "https://app.advocu.com/dockercaptains/join",
+  "source_url": "https://www.docker.com/community/captains/",
+  "model": "nvidia/nemotron-3-super-120b-a12b"
+}
