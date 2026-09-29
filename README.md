@@ -37,7 +37,7 @@ Pretty-printed JSON is written to stdout. `--out` also writes that same JSON to 
 
 ## Web demo
 
-Live demo: (link coming)
+Live demo: https://nim-ambassador-reader-doris-projects-c046e15b.vercel.app
 
 `public/index.html` is a single page with a URL field, a submit button, a loading state, and pretty-printed JSON. It POSTs the URL to `/api/extract`. The Python function in `api/extract.py` calls `read_ambassador_page` from `ambassador_reader.core`. The extraction prompt, the pydantic schema, and the CLI output are unchanged.
 
