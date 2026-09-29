@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ambassador reader</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3efe6;
+      --ink: #1d1a16;
+      --muted: #5e584e;
+      --line: #d8d0c2;
+      --paper: #fffdf8;
+      --accent: #0d6a4e;
+      --accent-ink: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Georgia, "Iowan Old Style", Palatino, serif;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(720px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 3.5rem 0 4rem;
+    }
+
+    h1 {
+      margin: 0 0 0.4rem;
+      font-size: 2.1rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .lede, .credit, .hint {
+      color: var(--muted);
+    }
+
+    .lede { margin: 0 0 1.75rem; max-width: 40rem; }
+
+    form {
+      display: grid;
+      gap: 0.7rem;
+      margin-bottom: 1rem;
+    }
+
+    label { font-size: 0.95rem; }
+
+    .row {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    input[type="url"] {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 0.7rem 0.8rem;
+      font: 1rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    }
+
+    input[type="url"]:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font: 600 1rem/1.2 ui-sans-serif, system-ui, sans-serif;
+      padding: 0.7rem 1rem;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: progress;
+      opacity: 0.7;
+    }
+
+    #status {
+      min-height: 1.5rem;
+      margin: 0 0 0.75rem;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.95rem;
+    }
+
+    #status[data-state="loading"] { color: var(--accent); }
+
+    pre {
+      margin: 0;
+      min-height: 12rem;
+      padding: 1rem;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font: 0.86rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .credit {
+      margin: 1.25rem 0 0;
+      font-size: 0.92rem;
+    }
+
+    a { color: var(--accent); }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.88em;
+    }
+
+    @media (max-width: 560px) {
+      .row { flex-direction: column; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Ambassador reader</h1>
+    <p class="lede">
+      Paste the URL of an ambassador, campus, or developer-champion page.
+      The demo fetches the page and returns a small JSON record. Fields the page does not state are null.
+    </p>
+    <form id="extract-form">
+      <label for="url">Program page URL</label>
+      <div class="row">
+        <input
+          id="url"
+          name="url"
+          type="url"
+          required
+          placeholder="https://example.com/campus-ambassador"
+          autocomplete="off"
+        >
+        <button id="submit" type="submit">Extract</button>
+      </div>
+    </form>
+    <p id="status" role="status">The JSON record will show up here.</p>
+    <pre id="output" aria-live="polite"></pre>
+    <p class="credit">
+      Extraction uses <a href="https://build.nvidia.com">NVIDIA NIM</a> via build.nvidia.com
+      (model <code>nvidia/nemotron-3-super-120b-a12b</code>).
+      Source: <a href="https://github.com/dunksmaster/nim-ambassador-reader">github.com/dunksmaster/nim-ambassador-reader</a>.
+    </p>
+    <p class="hint">About 5 requests per minute on each server instance. Check the source page before relying on a field.</p>
+  </main>
+  <script>
+    const form = document.querySelector("#extract-form");
+    const input = document.querySelector("#url");
+    const button = document.querySelector("#submit");
+    const status = document.querySelector("#status");
+    const output = document.querySelector("#output");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const url = input.value.trim();
+      button.disabled = true;
+      input.disabled = true;
+      button.textContent = "Reading…";
+      status.dataset.state = "loading";
+      status.textContent = "Reading the page…";
+      output.textContent = "";
+
+      try {
+        const response = await fetch("/api/extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          data = { error: "The server did not return JSON.", status: response.status };
+        }
+        output.textContent = JSON.stringify(data, null, 2);
+        status.dataset.state = response.ok ? "done" : "error";
+        status.textContent = response.ok
+          ? "Done."
+          : "Request failed (" + response.status + ").";
+      } catch (error) {
+        status.dataset.state = "error";
+        status.textContent = "Could not reach the server.";
+        output.textContent = JSON.stringify(
+          { error: "Could not reach the server." },
+          null,
+          2
+        );
+      } finally {
+        button.disabled = false;
+        input.disabled = false;
+        button.textContent = "Extract";
+      }
+    });
+  </script>
+</body>
+</html>

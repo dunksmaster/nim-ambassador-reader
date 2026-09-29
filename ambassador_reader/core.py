@@ -219,20 +219,24 @@ def fetched_url_differs(requested_url: str, fetched_url: str) -> bool:
     return _path_for_compare(requested.path) != _path_for_compare(fetched.path)
 
 
-def warn_about_fetch(requested_url: str, page: FetchedPage) -> None:
-    """Print fetch problems to stderr. They are not part of the JSON record."""
+def fetch_warning_messages(requested_url: str, page: FetchedPage) -> list[str]:
+    """Redirect and short-text warnings. The CLI prints these; they are not record fields."""
+    messages: list[str] = []
     if fetched_url_differs(requested_url, page.source_url):
-        print(
-            f"warning: redirected from {requested_url} to {page.source_url}",
-            file=sys.stderr,
-        )
+        messages.append(f"warning: redirected from {requested_url} to {page.source_url}")
     text_length = len(page.text.strip())
     if text_length < SHORT_TEXT_CHARS:
-        print(
+        messages.append(
             "warning: extracted page text is very short "
-            f"({text_length} characters); the result is likely thin or about the wrong page",
-            file=sys.stderr,
+            f"({text_length} characters); the result is likely thin or about the wrong page"
         )
+    return messages
+
+
+def warn_about_fetch(requested_url: str, page: FetchedPage) -> None:
+    """Print fetch problems to stderr. They are not part of the JSON record."""
+    for message in fetch_warning_messages(requested_url, page):
+        print(message, file=sys.stderr)
 
 
 def resolve_apply_url(apply_url: str | None, source_url: str) -> str | None:
@@ -364,14 +368,25 @@ def _message_text(content: object) -> str:
     return str(content)
 
 
-def nim_chat(model: str, messages: list[dict[str, str]]) -> str:
-    """Call the hosted NIM chat completions API. Does not log the API key."""
+def nim_chat(
+    model: str,
+    messages: list[dict[str, str]],
+    *,
+    timeout: float = NIM_TIMEOUT_SECONDS,
+    max_retries: int = NIM_MAX_RETRIES,
+) -> str:
+    """Call the hosted NIM chat completions API. Does not log the API key.
+
+    The CLI uses the default timeout. The web demo passes a shorter one so the
+    request can finish inside the platform limit. The API key is still read
+    only from the environment.
+    """
     key = require_api_key()
     client = OpenAI(
         base_url=NIM_BASE_URL,
         api_key=key,
-        timeout=NIM_TIMEOUT_SECONDS,
-        max_retries=NIM_MAX_RETRIES,
+        timeout=timeout,
+        max_retries=max_retries,
     )
     try:
         completion = client.chat.completions.create(

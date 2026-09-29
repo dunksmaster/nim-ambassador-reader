@@ -1,0 +1,6 @@
+# Runtime dependencies for the Vercel Python function in api/extract.py.
+# ambassador_reader itself is imported from this repository.
+openai>=1.40
+httpx>=0.27
+beautifulsoup4>=4.12
+pydantic>=2.5

@@ -35,6 +35,28 @@ ambassador-reader https://example.com/campus-ambassador --model mistralai/mistra
 
 Pretty-printed JSON is written to stdout. `--out` also writes that same JSON to the given path, creating parent directories if needed.
 
+## Web demo
+
+Live demo: (link coming)
+
+`public/index.html` is a single page with a URL field, a submit button, a loading state, and pretty-printed JSON. It POSTs the URL to `/api/extract`. The Python function in `api/extract.py` calls `read_ambassador_page` from `ambassador_reader.core`. The extraction prompt, the pydantic schema, and the CLI output are unchanged.
+
+The CLI still prints redirect and short-text warnings on stderr, and those warnings are still not fields of the CLI JSON. The web response adds the same warning strings in a `warnings` list.
+
+The function reads `NVIDIA_API_KEY` from the environment. The key is not hardcoded and is not written into responses. If the variable is unset, the function returns HTTP 500 and a JSON `error` field.
+
+Web-only limits:
+
+- The URL must use `http` or `https`.
+- The host is checked after DNS resolution. Loopback, private, link-local, multicast, reserved, and other non-public addresses are rejected. That includes `127.0.0.1`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.169.254`, `::1`, and `localhost`. The same check runs again on every redirect before that request is sent.
+- The download stops at about 2 MB. The fetch times out after 8 seconds.
+- Each client IP can make about 5 requests per minute. The counter is in memory on that function instance. On Vercel this is best-effort: instances do not share counts, and a new instance starts from zero.
+- `vercel.json` sets `maxDuration` to 60 seconds for `api/extract.py`. The web path calls NIM with a 12 second timeout and no SDK retries, so one fetch plus a JSON retry on the default model and on the fallback model stays under 60 seconds. The CLI still uses a 90 second NIM timeout.
+
+Status codes from the function: `400` for a rejected URL or a bad request, `429` when that instance's limit is exceeded, `502` when the page or the model returns an error, `504` when the fetch or the model times out, and `500` when `NVIDIA_API_KEY` is missing.
+
+To deploy, import the repository in Vercel and set `NVIDIA_API_KEY` in the project environment. Vercel installs the packages listed in `requirements.txt`. Static files are served from `public/`. `.python-version` selects Python 3.12.
+
 To record a real example file:
 
 ```bash
