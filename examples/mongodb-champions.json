@@ -1,0 +1,10 @@
+{
+  "program_name": "MongoDB Champions Program",
+  "company": "MongoDB",
+  "deadline": null,
+  "eligibility": "Nominees are nominated by MongoDB employees, current Champions, and program alumni; must share MongoDB knowledge via speaking at events, writing blogs or tutorials, creating videos, leading user groups, answering questions on forums, posting on social media.",
+  "benefits": "Exclusive access to executives, product roadmaps, preview programs; access to a peer network of MongoDB experts, annual Champions Summit; reserved content features, speaking slots at events; training and coaching on public speaking, blog writing, social media.",
+  "apply_url": null,
+  "source_url": "https://www.mongodb.com/community/champions",
+  "model": "nvidia/nemotron-3-super-120b-a12b"
+}

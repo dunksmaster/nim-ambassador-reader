@@ -1,0 +1,10 @@
+{
+  "program_name": "Grafana Champions",
+  "company": "Grafana Labs",
+  "deadline": null,
+  "eligibility": "Community leaders and experts who are passionate about Grafana, actively contribute to the open-source ecosystem, and want to play a pivotal role in shaping the platform's future.",
+  "benefits": "Featured blog posts in newsletters and social media; access to exclusive Champion swag store where points can be redeemed for Grafana-branded items; event invitations to meet experts, industry leaders, and the Grafana team; access to a private Slack channel for collaboration with other Champions and Grafana team members; exclusive perks, public recognition, and collaboration opportunities with the Grafana team.",
+  "apply_url": "https://docs.google.com/forms/d/1BSuIoR5aE6KnlDRVkExPYc-7n30S3aqxHncmsohkMMM/viewform?edit_requested=true",
+  "source_url": "https://grafana.com/community/champions/",
+  "model": "nvidia/nemotron-3-super-120b-a12b"
+}

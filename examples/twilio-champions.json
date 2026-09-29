@@ -1,0 +1,10 @@
+{
+  "program_name": "Twilio Champions",
+  "company": "Twilio",
+  "deadline": null,
+  "eligibility": "Be 18 years or older; Demonstrate Twilio product expertise and a passion for helping others; Contribute to the developer community through speaking events, publishing technical content, assisting with online forums, and more; Be committed to being a brand ambassador and upholding the Twilio values; Be fluent in English",
+  "benefits": "Exclusive virtual and in-person developer events; Dedicated communication channels in Twilio; Speaking, collaboration, and networking opportunities; Dedicated presentation, demo, and content resources; Exclusive swag and more",
+  "apply_url": null,
+  "source_url": "https://www.twilio.com/en-us/champions",
+  "model": "nvidia/nemotron-3-super-120b-a12b"
+}
